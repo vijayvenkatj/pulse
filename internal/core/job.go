@@ -5,22 +5,12 @@ import (
 	"net/url"
 )
 
-type ReqMethod string
-
-const (
-	GET    = "GET"
-	POST   = "POST"
-	PUT    = "PUT"
-	DELETE = "DELETE"
-	PATCH  = "PATCH"
-)
-
 type Job struct {
 	ID  uint32
 	URL *url.URL
 
 	// Body is pre-marshalled
-	Method ReqMethod
+	Method string
 	Body   []byte
 
 	Headers http.Header

@@ -6,9 +6,10 @@ type Result struct {
 	JobID uint32
 
 	Latency    time.Duration
+	TTFB       time.Duration
 	StatusCode int
-	BytesIn    uint32
-	BytesOut   uint32
+	BytesIn    int64
+	BytesOut   int64
 
 	Err       error
 	TimeStamp time.Time
