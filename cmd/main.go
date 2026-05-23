@@ -4,11 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/vijayvenkatj/pulse/internal/aggregator"
 	"github.com/vijayvenkatj/pulse/internal/core"
 	"github.com/vijayvenkatj/pulse/internal/scheduler"
 )
@@ -44,5 +44,5 @@ func main() {
 	config.Duration, _ = time.ParseDuration(durationStr)
 
 	results := scheduler.Scheduler(context.Background(), &http.Client{}, config)
-	log.Println(results)
+	fmt.Print("\n" + aggregator.Report(results))
 }
