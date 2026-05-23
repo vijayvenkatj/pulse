@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -41,10 +42,26 @@ func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config)
 	}
 
 	// Create Pacer
-	jobFn := core.CreateJobFactory("http://localhost:9001", "GET", []byte{}, nil)
-	interval := int(time.Second) / config.RPS
+	jobFn := core.CreateJobFactory(config.URL, config.Method, config.Payload, nil)
+	if jobFn == nil {
+		return []core.Result{
+			{
+				Err:       fmt.Errorf("invalid url: %s", config.URL),
+				TimeStamp: time.Now(),
+			},
+		}
+	}
+	if config.RPS <= 0 {
+		return []core.Result{
+			{
+				Err:       fmt.Errorf("invalid RPS: %d", config.RPS),
+				TimeStamp: time.Now(),
+			},
+		}
+	}
+	interval := time.Second / time.Duration(config.RPS)
 	go func() {
-		pacer.Pacer(ctx, time.Duration(interval), config.Requests, jobFn, jobChan)
+		pacer.Pacer(ctx, interval, config.Requests, jobFn, jobChan)
 		close(jobChan)
 	}()
 
