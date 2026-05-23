@@ -9,10 +9,9 @@ import (
 	"github.com/vijayvenkatj/pulse/internal/aggregator"
 	"github.com/vijayvenkatj/pulse/internal/core"
 	"github.com/vijayvenkatj/pulse/internal/pacer"
-	"github.com/vijayvenkatj/pulse/internal/server"
 )
 
-func Scheduler(ctx context.Context, httpClient *http.Client, config server.Config) []core.Result {
+func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config) []core.Result {
 
 	if config.Duration > 0 {
 		var cancel context.CancelFunc

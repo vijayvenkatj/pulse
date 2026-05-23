@@ -2,31 +2,47 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/vijayvenkatj/pulse/internal/core"
 	"github.com/vijayvenkatj/pulse/internal/scheduler"
-	"github.com/vijayvenkatj/pulse/internal/server"
 )
 
 func main() {
+	config := core.Config{}
+	var durationStr string
+	var payloadStr string
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	flag.IntVar(&config.Concurrency, "c", 10, "Number of concurrent workers")
+	flag.IntVar(&config.Requests, "n", 1000, "Total number of requests")
+	flag.IntVar(&config.RPS, "r", 200, "Requests per second")
+	flag.StringVar(&durationStr, "d", "5s", "Duration of the test (e.g. 10s, 1m)")
 
-	config := server.Config{
-		Concurrency: 30,
-		Requests:    2000,
-		RPS:         1000,
-		Duration:    6 * time.Second,
+	flag.StringVar(&config.Method, "m", "GET", "HTTP method")
+	flag.StringVar(&payloadStr, "p", "", "Request payload string")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: pulse [options] <url>\n\nOptions:\n")
+		flag.PrintDefaults()
 	}
 
-	httpClient := http.Client{}
+	flag.Parse()
 
-	start := time.Now()
-	scheduler.Scheduler(ctx, &httpClient, config)
-	end := time.Since(start)
+	if flag.NArg() < 1 {
+		fmt.Println("Error: URL is required")
+		flag.Usage()
+		os.Exit(1)
+	}
 
-	log.Println("TIME: ", end)
+	config.URL = flag.Arg(0)
+	config.Payload = []byte(payloadStr)
+	config.Duration, _ = time.ParseDuration(durationStr)
+
+	results := scheduler.Scheduler(context.Background(), &http.Client{}, config)
+	log.Println(results)
 }

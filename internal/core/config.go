@@ -1,4 +1,4 @@
-package server
+package core
 
 import "time"
 
@@ -7,4 +7,7 @@ type Config struct {
 	Requests    int
 	RPS         int
 	Duration    time.Duration
+	Method      string
+	URL         string
+	Payload     []byte
 }
