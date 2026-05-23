@@ -8,13 +8,19 @@ import (
 )
 
 // Pacer is responsible for generating the Jobs WRT the Clients requirements.
-func Pacer(ctx context.Context, interval time.Duration, jobFn func() core.Job, jobChan chan<- core.Job) {
+func Pacer(ctx context.Context, interval time.Duration, requests int, jobFn func() core.Job, jobChan chan<- core.Job) {
 
 	// Makes a Job once per interval, So for X RPS, we get X jobs per sec.
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
+	count := 0
+
 	for {
+		if requests > 0 && count >= requests {
+			return
+		}
+
 		select {
 		case <-ctx.Done():
 			return
@@ -28,6 +34,7 @@ func Pacer(ctx context.Context, interval time.Duration, jobFn func() core.Job, j
 			case <-ctx.Done():
 				return
 			case jobChan <- job:
+				count++
 			}
 		}
 	}

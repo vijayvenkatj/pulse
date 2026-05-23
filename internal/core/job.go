@@ -24,8 +24,9 @@ func CreateJobFactory(urlStr string, method string, body []byte, headers http.He
 		return nil
 	}
 
+	var id uint32
+
 	return func() Job {
-		var id uint32
 		return Job{
 			ID:  atomic.AddUint32(&id, 1),
 			URL: url,

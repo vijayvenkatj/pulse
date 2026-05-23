@@ -23,17 +23,11 @@ func Worker(ctx context.Context, jobChan <-chan core.Job, resultChan chan<- core
 				return
 			}
 
-			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-			defer cancel()
-
-			// Creating a new request with our client body and headers
-			reader := bytes.NewReader(job.Body)
-			req, err := http.NewRequestWithContext(ctx, job.Method, job.URL.String(), reader)
-			if err != nil {
-				log.Printf("ERROR: job %d skipped, %v", job.ID, err)
-				continue
+			select {
+			case <-ctx.Done():
+				return
+			default:
 			}
-			req.Header = job.Headers.Clone()
 
 			result := core.Result{
 				JobID:     job.ID,
@@ -41,18 +35,24 @@ func Worker(ctx context.Context, jobChan <-chan core.Job, resultChan chan<- core
 				BytesOut:  int64(len(job.Body)),
 			}
 
+			// Creating a new request with our client body and headers
+			reader := bytes.NewReader(job.Body)
+			req, err := http.NewRequestWithContext(ctx, job.Method, job.URL.String(), reader)
+			if err != nil {
+				log.Printf("ERROR: job %d skipped, %v", job.ID, err)
+				result.Err = err
+				resultChan <- result
+				continue
+			}
+			req.Header = job.Headers.Clone()
+
 			// This is to measure the metrics of the request
 			start := time.Now()
 			resp, reqErr := httpClient.Do(req)
 			result.TTFB = time.Since(start)
 			if reqErr != nil {
 				result.Err = reqErr
-				select {
-				case <-ctx.Done():
-					return
-				case resultChan <- result:
-
-				}
+				resultChan <- result
 				continue
 			}
 
@@ -67,12 +67,7 @@ func Worker(ctx context.Context, jobChan <-chan core.Job, resultChan chan<- core
 			result.StatusCode = resp.StatusCode
 
 			// Sending the result through the chan and checking for ctx cancellation in case.
-			select {
-			case <-ctx.Done():
-				return
-			case resultChan <- result:
-
-			}
+			resultChan <- result
 		}
 	}
 }
