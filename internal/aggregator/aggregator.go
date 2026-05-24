@@ -1,14 +1,12 @@
 package aggregator
 
-import (
-	"github.com/vijayvenkatj/pulse/internal/core"
-)
+import "github.com/vijayvenkatj/pulse/internal/core"
 
-// Aggregator takes in results and makes a Cummulated Result Slice.
-func Aggregator(resultChan <-chan core.Result, results []core.Result) {
-	i := 0
+// Aggregator consumes results and builds rolling metrics.
+func Aggregator(resultChan <-chan core.Result) *Metrics {
+	metrics := NewMetrics()
 	for result := range resultChan {
-		results[i] = result
-		i++
+		metrics.AddResult(result)
 	}
+	return metrics
 }

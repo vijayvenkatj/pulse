@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -56,10 +55,6 @@ func main() {
 	config.Payload = []byte(payloadStr)
 	config.Duration, _ = time.ParseDuration(durationStr)
 
-	if config.Requests > 100_000_000 {
-		log.Fatal("TOO MANY REQUESTS!")
-	}
-
-	results := scheduler.Scheduler(context.Background(), &http.Client{}, config)
-	fmt.Print("\n" + aggregator.Report(results))
+	metrics := scheduler.Scheduler(context.Background(), &http.Client{}, config)
+	fmt.Print("\n" + aggregator.Report(metrics))
 }

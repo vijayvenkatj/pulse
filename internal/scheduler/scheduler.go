@@ -12,7 +12,7 @@ import (
 	"github.com/vijayvenkatj/pulse/internal/pacer"
 )
 
-func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config) []core.Result {
+func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config) *aggregator.Metrics {
 
 	if config.Duration > 0 {
 		var cancel context.CancelFunc
@@ -26,10 +26,10 @@ func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config)
 	// Result channel
 	resultChan := make(chan core.Result, config.Requests)
 
-	results := make([]core.Result, config.Requests)
+	var metrics *aggregator.Metrics
 	done := make(chan struct{})
 	go func() {
-		aggregator.Aggregator(resultChan, results)
+		metrics = aggregator.Aggregator(resultChan)
 		close(done)
 	}()
 
@@ -44,20 +44,20 @@ func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config)
 	// Create Pacer
 	jobFn := core.CreateJobFactory(config.URL, config.Method, config.Payload, nil)
 	if jobFn == nil {
-		return []core.Result{
-			{
-				Err:       fmt.Errorf("invalid url: %s", config.URL),
-				TimeStamp: time.Now(),
-			},
-		}
+		errorMetrics := aggregator.NewMetrics()
+		errorMetrics.AddResult(core.Result{
+			Err:       fmt.Errorf("invalid url: %s", config.URL),
+			TimeStamp: time.Now(),
+		})
+		return errorMetrics
 	}
 	if config.RPS <= 0 {
-		return []core.Result{
-			{
-				Err:       fmt.Errorf("invalid RPS: %d", config.RPS),
-				TimeStamp: time.Now(),
-			},
-		}
+		errorMetrics := aggregator.NewMetrics()
+		errorMetrics.AddResult(core.Result{
+			Err:       fmt.Errorf("invalid RPS: %d", config.RPS),
+			TimeStamp: time.Now(),
+		})
+		return errorMetrics
 	}
 	interval := time.Second / time.Duration(config.RPS)
 	go func() {
@@ -69,5 +69,5 @@ func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config)
 	close(resultChan)
 	<-done
 
-	return results
+	return metrics
 }
