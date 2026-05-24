@@ -21,10 +21,10 @@ func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config)
 	}
 
 	// Job channel
-	jobChan := make(chan core.Job, config.Requests)
+	jobChan := make(chan core.Job, 4*config.Concurrency)
 
 	// Result channel
-	resultChan := make(chan core.Result, config.Requests)
+	resultChan := make(chan core.Result, 4*config.Concurrency)
 
 	var metrics *aggregator.Metrics
 	done := make(chan struct{})
