@@ -5,13 +5,10 @@ import (
 )
 
 // Aggregator takes in results and makes a Cummulated Result Slice.
-func Aggregator(resultChan <-chan core.Result) []core.Result {
-
-	results := []core.Result{}
-
+func Aggregator(resultChan <-chan core.Result, results []core.Result) {
+	i := 0
 	for result := range resultChan {
-		results = append(results, result)
+		results[i] = result
+		i++
 	}
-
-	return results
 }

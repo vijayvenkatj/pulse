@@ -26,10 +26,10 @@ func Scheduler(ctx context.Context, httpClient *http.Client, config core.Config)
 	// Result channel
 	resultChan := make(chan core.Result, config.Requests)
 
-	var results []core.Result
+	results := make([]core.Result, config.Requests)
 	done := make(chan struct{})
 	go func() {
-		results = aggregator.Aggregator(resultChan)
+		aggregator.Aggregator(resultChan, results)
 		close(done)
 	}()
 

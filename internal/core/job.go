@@ -10,7 +10,7 @@ type Job struct {
 	ID  uint32
 	URL *url.URL
 
-	// Body is pre-marshalled
+	// Body is marshalled payload bytes.
 	Method string
 	Body   []byte
 
