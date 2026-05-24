@@ -55,3 +55,13 @@ Status codes
 Code  Count  Percent
 200   50     100.00%
 ```
+
+## CPU profiling
+
+### JSON serialization per job vs overall
+
+Per-job JSON serialization shifts more CPU into `encoding/json` and increases allocation pressure compared to serializing once and reusing the payload.
+
+### Heap
+
+Heap profiles confirm that per-job serialization creates more short-lived allocations than reusing a pre-marshalled payload.
